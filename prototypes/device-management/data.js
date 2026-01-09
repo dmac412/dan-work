@@ -1,15 +1,12 @@
 // Device Management Platform - Mock Data Generator
 // Generates hierarchical location data with devices
 
-const DEVICE_MODELS = [
-  'Cisco Catalyst 9300',
-  'Cisco Catalyst 9200',
-  'Juniper EX4300',
-  'Aruba 6300M',
-  'Dell PowerSwitch S4148',
-  'HPE Aruba 2930F',
-  'Meraki MS225',
-  'Ubiquiti UniFi Pro'
+// Device definitions - each room has these exact devices
+const ROOM_DEVICES = [
+  { model: 'Touchlink Panel', type: 'managed', prefix: 'TLP' },
+  { model: 'Controller', type: 'managed', prefix: 'CTL' },
+  { model: 'Matrix Switcher', type: 'managed', prefix: 'MTX' },
+  { model: 'Touchlink Scheduler', type: 'discovered', prefix: 'TLS' }
 ];
 
 const ALERT_TYPES = [
@@ -44,30 +41,31 @@ function generateMAC() {
   return mac;
 }
 
-function generateHostname(building, floor, room, index) {
-  const types = ['sw', 'rt', 'ap', 'fw'];
-  const type = types[Math.floor(Math.random() * types.length)];
-  return `${type}-${building.toLowerCase().replace(' ', '')}-f${floor}-r${room}-${String(index).padStart(2, '0')}`;
+function generateHostname(prefix, building, floor, room) {
+  return `${prefix}-${building.toLowerCase().replace(' ', '')}-f${floor}-r${room}`;
 }
 
 function generateIP(baseOctet, deviceIndex) {
   return `10.${baseOctet}.${Math.floor(deviceIndex / 254)}.${(deviceIndex % 254) + 1}`;
 }
 
-// Generate device data
+// Generate device data - creates exactly 4 devices per room (3 managed, 1 discovered)
 function generateDevices(countryName, cityName, buildingName, floorName, roomName, roomIndex, ipBase) {
   const devices = [];
-  const devicesPerRoom = 4;
+  const floorNum = floorName.replace('Floor ', '');
+  const roomNum = roomName.replace('Room ', '');
 
-  for (let i = 0; i < devicesPerRoom; i++) {
-    const deviceIndex = roomIndex * devicesPerRoom + i;
-    const isManaged = Math.random() < 0.75; // 75% managed
-    const isConnected = isManaged ? Math.random() > 0.1 : null; // 90% of managed are connected
+  ROOM_DEVICES.forEach((deviceDef, i) => {
+    const deviceIndex = roomIndex * ROOM_DEVICES.length + i;
+    const isManaged = deviceDef.type === 'managed';
 
-    // Generate alerts for ~20% of managed devices
+    // For managed devices: 85% online, 15% offline
+    const isOnline = isManaged ? Math.random() > 0.15 : null;
+
+    // Generate alerts for ~25% of managed devices (discovered never have alerts)
     const alerts = [];
-    if (isManaged && Math.random() < 0.2) {
-      const numAlerts = Math.floor(Math.random() * 3) + 1;
+    if (isManaged && Math.random() < 0.25) {
+      const numAlerts = Math.floor(Math.random() * 2) + 1;
       const usedAlerts = new Set();
       for (let a = 0; a < numAlerts; a++) {
         let alertIndex;
@@ -83,19 +81,19 @@ function generateDevices(countryName, cityName, buildingName, floorName, roomNam
       }
     }
 
-    // Force some disconnections and alerts to ensure red statuses
+    // Force some issues in certain rooms to ensure red statuses
     const forceIssue = roomIndex % 5 === 0 && i === 0;
 
     devices.push({
       id: `device-${deviceIndex}`,
-      hostname: generateHostname(buildingName, floorName.replace('Floor ', ''), roomName.replace('Room ', ''), i + 1),
-      model: DEVICE_MODELS[Math.floor(Math.random() * DEVICE_MODELS.length)],
+      hostname: generateHostname(deviceDef.prefix, buildingName, floorNum, roomNum),
+      model: deviceDef.model,
       serialNumber: generateSerialNumber(),
       macAddress: generateMAC(),
-      ipAddress: generateIP(ipBase, deviceIndex),
-      type: isManaged ? 'managed' : 'discovered',
-      status: isManaged ? (forceIssue ? 'disconnected' : (isConnected ? 'connected' : 'disconnected')) : null,
-      alerts: forceIssue && alerts.length === 0 ? [{
+      ipAddress: generateIP(ipBase, i),
+      type: deviceDef.type,
+      status: isManaged ? (forceIssue ? 'offline' : (isOnline ? 'online' : 'offline')) : null,
+      alerts: forceIssue && alerts.length === 0 && isManaged ? [{
         id: `alert-${deviceIndex}-forced`,
         severity: 'critical',
         message: 'Device unreachable',
@@ -111,7 +109,7 @@ function generateDevices(countryName, cityName, buildingName, floorName, roomNam
         room: roomName
       }
     });
-  }
+  });
 
   return devices;
 }
@@ -122,7 +120,7 @@ function calculateStatus(devices) {
 
   const hasIssue = devices.some(d => {
     if (d.type === 'managed') {
-      return d.status === 'disconnected' || (d.alerts && d.alerts.length > 0);
+      return d.status === 'offline' || (d.alerts && d.alerts.length > 0);
     }
     return false;
   });
@@ -163,8 +161,7 @@ function countDevices(node) {
 // Generate the full hierarchy
 function generateLocationHierarchy() {
   const countries = [
-    { name: 'USA', cities: ['Raleigh', 'Charlotte'] },
-    { name: 'Canada', cities: ['Toronto', 'Vancouver'] }
+    { name: 'USA', cities: ['Raleigh', 'Anaheim'] }
   ];
 
   let roomIndex = 0;

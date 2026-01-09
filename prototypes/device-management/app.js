@@ -8,12 +8,14 @@
   let selectedDevices = new Set();
   let currentFilter = 'all';
   let searchQuery = '';
+  let locationSearchQuery = '';
   let sortColumn = null;
   let sortDirection = 'asc';
   let allExpanded = false;
 
   // DOM Elements
   const locationTree = document.getElementById('locationTree');
+  const locationSearch = document.getElementById('locationSearch');
   const statusFilter = document.getElementById('statusFilter');
   const expandToggle = document.getElementById('expandToggle');
   const emptyState = document.getElementById('emptyState');
@@ -44,6 +46,75 @@
     chevron: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`
   };
 
+  // Fuzzy match function - returns match info with indices for highlighting
+  function fuzzyMatch(text, query) {
+    if (!query) return { matches: true, indices: [] };
+
+    const textLower = text.toLowerCase();
+    const queryLower = query.toLowerCase();
+
+    // Try exact substring match first
+    const exactIndex = textLower.indexOf(queryLower);
+    if (exactIndex !== -1) {
+      const indices = [];
+      for (let i = 0; i < query.length; i++) {
+        indices.push(exactIndex + i);
+      }
+      return { matches: true, indices };
+    }
+
+    // Fuzzy match - characters must appear in order
+    const indices = [];
+    let queryIdx = 0;
+
+    for (let i = 0; i < text.length && queryIdx < queryLower.length; i++) {
+      if (textLower[i] === queryLower[queryIdx]) {
+        indices.push(i);
+        queryIdx++;
+      }
+    }
+
+    if (queryIdx === queryLower.length) {
+      return { matches: true, indices };
+    }
+
+    return { matches: false, indices: [] };
+  }
+
+  // Highlight matched characters in text
+  function highlightMatch(text, indices) {
+    if (!indices || indices.length === 0) return text;
+
+    let result = '';
+    let lastIndex = 0;
+
+    // Group consecutive indices for cleaner highlighting
+    const groups = [];
+    let currentGroup = [indices[0]];
+
+    for (let i = 1; i < indices.length; i++) {
+      if (indices[i] === indices[i - 1] + 1) {
+        currentGroup.push(indices[i]);
+      } else {
+        groups.push(currentGroup);
+        currentGroup = [indices[i]];
+      }
+    }
+    groups.push(currentGroup);
+
+    for (const group of groups) {
+      const start = group[0];
+      const end = group[group.length - 1] + 1;
+
+      result += text.slice(lastIndex, start);
+      result += `<span class="search-highlight">${text.slice(start, end)}</span>`;
+      lastIndex = end;
+    }
+
+    result += text.slice(lastIndex);
+    return result;
+  }
+
   // Initialize
   function init() {
     renderTree();
@@ -56,16 +127,63 @@
     locationTree.innerHTML = locations.map(node => renderTreeNode(node)).join('');
   }
 
+  // Check if a node matches the location search query
+  function nodeMatchesSearch(node) {
+    if (!locationSearchQuery) return { matches: true, indices: [] };
+
+    // Check if this node's name matches
+    const result = fuzzyMatch(node.name, locationSearchQuery);
+    if (result.matches) return result;
+
+    // Check if any children match
+    if (node.children) {
+      for (const child of node.children) {
+        if (nodeMatchesSearch(child).matches) {
+          return { matches: true, indices: [] }; // Parent matches because child matches
+        }
+      }
+    }
+
+    return { matches: false, indices: [] };
+  }
+
+  // Check if a node or any of its descendants match the current status filter
+  function nodeMatchesFilter(node) {
+    if (currentFilter === 'all') return true;
+
+    // For rooms (leaf nodes), check their status directly
+    if (node.type === 'room') {
+      if (currentFilter === 'issues') return node.status === 'issue';
+      if (currentFilter === 'healthy') return node.status === 'healthy';
+    }
+
+    // For parent nodes, check if any children match
+    if (node.children) {
+      return node.children.some(child => nodeMatchesFilter(child));
+    }
+
+    return false;
+  }
+
   function renderTreeNode(node, depth = 0) {
     const hasChildren = node.children && node.children.length > 0;
     const isRoom = node.type === 'room';
-    const isExpanded = node.expanded;
+    const isExpanded = node.expanded || (locationSearchQuery && nodeMatchesSearch(node).matches);
     const isSelected = node.id === selectedRoomId;
     const deviceCount = node.deviceCount ? node.deviceCount.total : 0;
 
     // Apply status filter
-    if (currentFilter === 'issues' && node.status !== 'issue') return '';
-    if (currentFilter === 'healthy' && node.status !== 'healthy') return '';
+    if (!nodeMatchesFilter(node)) return '';
+
+    // Apply search filter
+    const searchResult = nodeMatchesSearch(node);
+    if (!searchResult.matches) return '';
+
+    // Get highlighted name
+    const nameMatch = fuzzyMatch(node.name, locationSearchQuery);
+    const displayName = nameMatch.matches && nameMatch.indices.length > 0
+      ? highlightMatch(node.name, nameMatch.indices)
+      : node.name;
 
     const childrenHtml = hasChildren
       ? `<div class="tree-children ${isExpanded ? 'expanded' : ''}" data-parent="${node.id}">
@@ -82,7 +200,7 @@
           <span class="expand-icon ${isExpanded ? 'expanded' : ''} ${!hasChildren ? 'hidden' : ''}">${icons.chevron}</span>
           <span class="status-indicator ${node.status}"></span>
           <span class="node-icon">${icons[node.type]}</span>
-          <span class="node-name">${node.name}</span>
+          <span class="node-name">${displayName}</span>
           <span class="node-count">${deviceCount}</span>
         </div>
         ${childrenHtml}
@@ -98,6 +216,12 @@
     // Status filter
     statusFilter.addEventListener('change', (e) => {
       currentFilter = e.target.value;
+      renderTree();
+    });
+
+    // Location search
+    locationSearch.addEventListener('input', (e) => {
+      locationSearchQuery = e.target.value;
       renderTree();
     });
 
@@ -347,8 +471,18 @@
   // Render Device Row
   function renderDeviceRow(device) {
     const isManaged = device.type === 'managed';
-    const hasIssue = isManaged && (device.status === 'disconnected' || (device.alerts && device.alerts.length > 0));
+    const hasIssue = isManaged && (device.status === 'offline' || (device.alerts && device.alerts.length > 0));
     const isSelected = selectedDevices.has(device.id);
+
+    // Connection status icon
+    let connectionStatus;
+    if (!isManaged) {
+      connectionStatus = '<span class="connection-icon na" title="N/A">—</span>';
+    } else if (device.status === 'online') {
+      connectionStatus = '<span class="connection-icon online" title="Online">●</span>';
+    } else {
+      connectionStatus = '<span class="connection-icon offline" title="Offline">●</span>';
+    }
 
     // Alert badge
     let alertBadge = '<span class="no-alerts">—</span>';
@@ -372,6 +506,9 @@
         <td>
           <span class="type-badge ${device.type}">${device.type}</span>
         </td>
+        <td class="connection-cell">
+          ${connectionStatus}
+        </td>
         <td>
           <div class="device-info">
             <span class="device-hostname">${device.hostname}</span>
@@ -381,15 +518,6 @@
         </td>
         <td>
           <span class="ip-address">${device.ipAddress}</span>
-        </td>
-        <td>
-          ${isManaged
-            ? `<div class="status-cell">
-                <span class="status-icon ${device.status}"></span>
-                <span class="status-text ${device.status}">${device.status === 'connected' ? 'Connected' : 'Disconnected'}</span>
-              </div>`
-            : '<span class="status-text na">N/A</span>'
-          }
         </td>
         <td>${alertBadge}</td>
       </tr>
