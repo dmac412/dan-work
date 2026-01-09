@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Management Platform</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Left Panel - Location Hierarchy -->
+    <aside class="left-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          Locations
+        </h2>
+        <div class="panel-controls">
+          <select class="filter-select" id="statusFilter">
+            <option value="all">All Locations</option>
+            <option value="issues">Issues Only (Red)</option>
+            <option value="healthy">Healthy Only (Green)</option>
+          </select>
+          <button class="expand-toggle-btn" id="expandToggle">Expand All</button>
+        </div>
+      </div>
+      <div class="tree-container" id="locationTree">
+        <!-- Tree rendered by JS -->
+      </div>
+    </aside>
+
+    <!-- Right Panel - Room Device View -->
+    <main class="right-panel">
+      <!-- Empty State (shown when no room selected) -->
+      <div class="empty-state" id="emptyState">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <h3>Select a Room</h3>
+        <p>Choose a room from the location tree to view its devices</p>
+      </div>
+
+      <!-- Room View (shown when room is selected) -->
+      <div class="room-view" id="roomView" style="display: none;">
+        <header class="room-header">
+          <nav class="breadcrumb" id="breadcrumb">
+            <!-- Rendered by JS -->
+          </nav>
+          <div class="room-summary">
+            <div class="device-counts" id="deviceCounts">
+              <!-- Rendered by JS -->
+            </div>
+            <div class="bulk-actions" id="bulkActions" style="display: none;">
+              <div class="bulk-dropdown">
+                <button class="bulk-btn" id="bulkActionBtn">
+                  <span id="selectedCount">0</span> Selected
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div class="bulk-menu" id="bulkMenu">
+                  <div class="bulk-menu-item" data-action="reboot">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="23 4 23 10 17 10"></polyline>
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    Reboot Selected
+                  </div>
+                  <div class="bulk-menu-item" data-action="firmware">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Update Firmware
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="device-table-container">
+          <div class="table-controls">
+            <div class="search-box">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="deviceSearch" placeholder="Search devices by hostname, IP, model, or serial...">
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table class="device-table">
+              <thead>
+                <tr>
+                  <th class="checkbox-cell">
+                    <input type="checkbox" class="device-checkbox" id="selectAll">
+                  </th>
+                  <th data-sort="type">Type <span class="sort-icon">↕</span></th>
+                  <th data-sort="hostname">Device Info <span class="sort-icon">↕</span></th>
+                  <th data-sort="ipAddress">IP Address <span class="sort-icon">↕</span></th>
+                  <th data-sort="status">Status <span class="sort-icon">↕</span></th>
+                  <th data-sort="alerts">Alerts <span class="sort-icon">↕</span></th>
+                </tr>
+              </thead>
+              <tbody id="deviceTableBody">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Device Details</h3>
+        <button class="modal-close" id="modalClose">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <div class="modal-placeholder">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          <p>Device Details - Coming Soon</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span id="toastMessage">Action completed</span>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
