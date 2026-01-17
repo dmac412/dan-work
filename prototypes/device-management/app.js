@@ -36,6 +36,27 @@
   const toast = document.getElementById('toast');
   const toastMessage = document.getElementById('toastMessage');
 
+  // Control Panel elements
+  const controlPanelPopout = document.getElementById('controlPanelPopout');
+  const panelCloseBtn = document.getElementById('panelCloseBtn');
+  const panelDeviceIcon = document.getElementById('panelDeviceIcon');
+  const panelDeviceName = document.getElementById('panelDeviceName');
+  const panelDeviceType = document.getElementById('panelDeviceType');
+  const controllerPanelContent = document.getElementById('controllerPanelContent');
+  const vtlpPanelContent = document.getElementById('vtlpPanelContent');
+  const tablePanelWrapper = document.querySelector('.table-panel-wrapper');
+
+  // Panel state
+  let activePanelDeviceId = null;
+
+  // View state
+  let currentView = 'helpdesk'; // 'helpdesk' or 'dashboard'
+
+  // Dashboard elements
+  const dashboardView = document.getElementById('dashboardView');
+  const helpDeskView = document.getElementById('helpDeskView');
+  const menuItems = document.querySelectorAll('.menu-item');
+
   // Icons
   const icons = {
     school: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>`,
@@ -128,6 +149,210 @@
   function init() {
     renderTree();
     bindEvents();
+    bindNavigation();
+  }
+
+  // Bind navigation events
+  function bindNavigation() {
+    menuItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const title = item.getAttribute('title');
+
+        // Update active state
+        menuItems.forEach(m => m.classList.remove('active'));
+        item.classList.add('active');
+
+        if (title === 'Dashboard') {
+          switchToView('dashboard');
+        } else if (title === 'Help Desk') {
+          switchToView('helpdesk');
+        }
+      });
+    });
+  }
+
+  // Switch between views
+  function switchToView(view) {
+    currentView = view;
+
+    if (view === 'dashboard') {
+      dashboardView.style.display = 'block';
+      helpDeskView.style.display = 'none';
+      renderDashboard();
+    } else {
+      dashboardView.style.display = 'none';
+      helpDeskView.style.display = 'flex';
+    }
+  }
+
+  // Render Dashboard
+  function renderDashboard() {
+    // Update summary cards
+    const stats = DeviceData.getDashboardStats();
+    document.getElementById('dashTotalRooms').textContent = stats.totalRooms;
+    document.getElementById('dashHealthyRooms').textContent = stats.healthyRooms;
+    document.getElementById('dashIssueRooms').textContent = stats.issueRooms;
+    document.getElementById('dashAvgUptime').textContent = stats.avgUptime + '%';
+
+    // Render problematic rooms table
+    renderProblematicRoomsTable();
+
+    // Render campus health grid
+    renderCampusHealthGrid();
+  }
+
+  // Render Problematic Rooms Table
+  function renderProblematicRoomsTable() {
+    const problematicRooms = DeviceData.getProblematicRooms(10);
+    const tbody = document.getElementById('problematicRoomsBody');
+
+    if (!tbody) return;
+
+    tbody.innerHTML = problematicRooms.map(room => {
+      const lastIncidentDays = room.lastIncident
+        ? Math.floor((new Date() - new Date(room.lastIncident)) / (1000 * 60 * 60 * 24))
+        : null;
+
+      const commonIssue = room.incidents.length > 0
+        ? room.incidents[room.incidents.length - 1].issue
+        : 'N/A';
+
+      return `
+        <tr class="${room.currentStatus === 'issue' ? 'current-issue' : ''}">
+          <td><strong>${room.roomName}</strong></td>
+          <td>${room.building}, ${room.campus}</td>
+          <td>
+            <span class="incident-count ${room.totalIncidents >= 5 ? 'high' : room.totalIncidents >= 3 ? 'medium' : ''}">
+              ${room.totalIncidents}
+            </span>
+          </td>
+          <td>
+            <span class="uptime-badge ${room.uptimePercentage < 95 ? 'low' : room.uptimePercentage < 98 ? 'medium' : 'high'}">
+              ${room.uptimePercentage}%
+            </span>
+          </td>
+          <td>${commonIssue}</td>
+          <td>${lastIncidentDays !== null ? lastIncidentDays + 'd ago' : 'N/A'}</td>
+          <td>
+            <span class="status-pill ${room.currentStatus}">${room.currentStatus === 'issue' ? 'Issue' : 'Healthy'}</span>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (problematicRooms.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="no-data">No problematic rooms found</td></tr>';
+    }
+  }
+
+  // Render Campus Health Grid
+  function renderCampusHealthGrid() {
+    const campuses = DeviceData.getCampusHealthSummary();
+    const grid = document.getElementById('campusHealthGrid');
+
+    if (!grid) return;
+
+    grid.innerHTML = campuses.map(campus => `
+      <div class="campus-health-card">
+        <div class="campus-header">
+          <h4>${campus.name}</h4>
+          <span class="campus-uptime ${parseFloat(campus.avgUptime) < 95 ? 'low' : ''}">${campus.avgUptime}% uptime</span>
+        </div>
+        <div class="campus-stats">
+          <div class="campus-stat">
+            <span class="stat-number">${campus.totalRooms}</span>
+            <span class="stat-text">Rooms</span>
+          </div>
+          <div class="campus-stat healthy">
+            <span class="stat-number">${campus.healthyRooms}</span>
+            <span class="stat-text">Healthy</span>
+          </div>
+          <div class="campus-stat ${campus.totalRooms - campus.healthyRooms > 0 ? 'issues' : ''}">
+            <span class="stat-number">${campus.totalRooms - campus.healthyRooms}</span>
+            <span class="stat-text">Issues</span>
+          </div>
+          <div class="campus-stat">
+            <span class="stat-number">${campus.totalIncidents}</span>
+            <span class="stat-text">Incidents (30d)</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Render Room Health Chart
+  function renderRoomHealthChart(roomId) {
+    const healthData = DeviceData.getRoomHealth(roomId);
+    const chartContainer = document.getElementById('healthChart');
+
+    if (!chartContainer || !healthData) return;
+
+    // Update stats
+    document.getElementById('healthBadge').textContent = healthData.uptimePercentage + '% Uptime';
+    document.getElementById('statIncidents').textContent = healthData.totalIncidents;
+    document.getElementById('statMTTR').textContent = healthData.avgResolutionTime > 0 ? healthData.avgResolutionTime + 'm' : 'N/A';
+
+    const lastIncidentDays = healthData.lastIncident
+      ? Math.floor((new Date() - new Date(healthData.lastIncident)) / (1000 * 60 * 60 * 24))
+      : null;
+    document.getElementById('statLastIssue').textContent = lastIncidentDays !== null ? lastIncidentDays + 'd ago' : 'None';
+
+    // Update health badge color
+    const badge = document.getElementById('healthBadge');
+    badge.className = 'health-badge';
+    if (healthData.uptimePercentage < 95) {
+      badge.classList.add('low');
+    } else if (healthData.uptimePercentage < 98) {
+      badge.classList.add('medium');
+    } else {
+      badge.classList.add('high');
+    }
+
+    // Render chart bars
+    const barsContainer = chartContainer.querySelector('.chart-bars');
+    if (barsContainer) {
+      barsContainer.innerHTML = healthData.history.map(day => `
+        <div class="chart-bar ${day.status}" title="${day.date}: ${day.status === 'issue' ? day.downtimeMinutes + 'm downtime' : 'Healthy'}"></div>
+      `).join('');
+    }
+  }
+
+  // Update Room At A Glance
+  function updateRoomGlance(roomId) {
+    // Simulated room state (in real app, this would come from the controller/TLP)
+    const inputs = ['HDMI 1', 'HDMI 2', 'Wireless', 'USB-C'];
+    const micStates = ['Active', 'Muted', 'Active', 'Active'];
+    const displayStates = ['On', 'On', 'Standby', 'On'];
+
+    // Random but consistent per room
+    const hash = roomId.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0);
+    const idx = Math.abs(hash) % inputs.length;
+
+    document.getElementById('glanceInput').textContent = inputs[idx];
+    document.getElementById('glanceMic').textContent = micStates[idx];
+    document.getElementById('glanceDisplay').textContent = displayStates[idx];
+    document.getElementById('glanceVolume').textContent = (50 + (Math.abs(hash) % 40)) + '%';
+    document.getElementById('glanceRecording').textContent = idx === 2 ? 'Recording' : 'Off';
+    document.getElementById('glanceNetwork').textContent = 'Connected';
+
+    // Update icon states
+    const micIcon = document.querySelector('.glance-icon.mic-icon');
+    if (micIcon) {
+      micIcon.classList.toggle('active', micStates[idx] === 'Active');
+      micIcon.classList.toggle('muted', micStates[idx] === 'Muted');
+    }
+
+    const recIcon = document.getElementById('glanceRecIcon');
+    if (recIcon) {
+      recIcon.classList.toggle('recording', idx === 2);
+    }
+
+    const displayIcon = document.querySelector('.glance-icon.display-icon');
+    if (displayIcon) {
+      displayIcon.classList.toggle('active', displayStates[idx] === 'On');
+      displayIcon.classList.toggle('standby', displayStates[idx] === 'Standby');
+    }
   }
 
   // Render Location Tree
@@ -284,7 +509,54 @@
       if (e.key === 'Escape') {
         closeModal();
         inlineBulkMenu.classList.remove('visible');
+        closeControlPanel();
       }
+    });
+
+    // Panel close button
+    if (panelCloseBtn) {
+      panelCloseBtn.addEventListener('click', closeControlPanel);
+    }
+
+    // Panel control buttons (for demo feedback)
+    document.querySelectorAll('.control-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        showToast('Command sent successfully', 'success');
+      });
+    });
+
+    // Input selector buttons
+    document.querySelectorAll('.input-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.input-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        showToast(`Switched to Input ${e.currentTarget.dataset.input}`, 'success');
+      });
+    });
+
+    // Power toggle buttons
+    document.querySelectorAll('.power-toggle').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const toggle = e.currentTarget;
+        const isOn = toggle.classList.contains('on');
+        const control = toggle.dataset.control;
+
+        toggle.classList.toggle('on');
+        toggle.classList.toggle('off');
+
+        const statusEl = toggle.querySelector('.toggle-status');
+        if (control === 'power') {
+          statusEl.textContent = isOn ? 'OFF' : 'ON';
+        } else if (control === 'mic') {
+          statusEl.textContent = isOn ? 'MUTED' : 'ACTIVE';
+        } else if (control === 'recording') {
+          statusEl.textContent = isOn ? 'OFF' : 'REC';
+          if (!isOn) toggle.classList.add('recording');
+          else toggle.classList.remove('recording');
+        }
+
+        showToast(`${control.charAt(0).toUpperCase() + control.slice(1)} ${isOn ? 'disabled' : 'enabled'}`, 'success');
+      });
     });
   }
 
@@ -374,6 +646,10 @@
     renderRoomHeader(roomId);
     renderDeviceTable();
     updateBulkActions();
+
+    // Render room health and glance
+    renderRoomHealthChart(roomId);
+    updateRoomGlance(roomId);
   }
 
   // Render Room Header
@@ -511,6 +787,27 @@
       });
     });
 
+    // Bind action panel buttons
+    deviceTableBody.querySelectorAll('.action-panel-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const deviceId = btn.dataset.deviceId;
+        const panelType = btn.dataset.panelType;
+
+        // Toggle if clicking same device
+        if (activePanelDeviceId === deviceId) {
+          closeControlPanel();
+        } else {
+          openControlPanel(deviceId, panelType);
+        }
+      });
+    });
+
+    // Update button states if panel is open
+    if (activePanelDeviceId) {
+      updateActionButtonStates(activePanelDeviceId);
+    }
+
     // Update select all state
     updateSelectAllState();
   }
@@ -629,6 +926,22 @@
         </td>
         <td>${firmwareCell}</td>
         <td>${alertBadge}</td>
+        <td class="actions-cell">
+          ${device.type === 'controller' ? `
+            <button class="action-panel-btn controller-action" data-device-id="${device.id}" data-panel-type="controller" title="Open Control Panel">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+              <span>Control Panel</span>
+              <span class="btn-arrow">→</span>
+            </button>
+          ` : ''}
+          ${device.type === 'tlp' ? `
+            <button class="action-panel-btn tlp-action" data-device-id="${device.id}" data-panel-type="vtlp" title="Open Virtual TLP">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>
+              <span>VTLP</span>
+              <span class="btn-arrow">→</span>
+            </button>
+          ` : ''}
+        </td>
       </tr>
     `;
   }
@@ -756,6 +1069,64 @@
   // Close Modal
   function closeModal() {
     modalOverlay.classList.remove('visible');
+  }
+
+  // Open Control Panel
+  function openControlPanel(deviceId, panelType) {
+    const allDevices = DeviceData.getAllDevices();
+    const device = allDevices.find(d => d.id === deviceId);
+
+    if (!device) return;
+
+    // Set active device
+    activePanelDeviceId = deviceId;
+
+    // Update panel header
+    panelDeviceName.textContent = device.hostname;
+    panelDeviceType.textContent = panelType === 'controller' ? 'Control Panel' : 'Virtual Touchlink Panel';
+
+    // Set device icon
+    if (panelType === 'controller') {
+      panelDeviceIcon.innerHTML = deviceIcons.controller;
+      controllerPanelContent.style.display = 'block';
+      vtlpPanelContent.style.display = 'none';
+    } else {
+      panelDeviceIcon.innerHTML = deviceIcons.tlp;
+      controllerPanelContent.style.display = 'none';
+      vtlpPanelContent.style.display = 'block';
+    }
+
+    // Show panel and compress table
+    controlPanelPopout.classList.add('open');
+    if (tablePanelWrapper) {
+      tablePanelWrapper.classList.add('panel-open');
+    }
+
+    // Update active button state
+    updateActionButtonStates(deviceId);
+  }
+
+  // Close Control Panel
+  function closeControlPanel() {
+    activePanelDeviceId = null;
+    controlPanelPopout.classList.remove('open');
+    if (tablePanelWrapper) {
+      tablePanelWrapper.classList.remove('panel-open');
+    }
+
+    // Clear active button states
+    updateActionButtonStates(null);
+  }
+
+  // Update action button states
+  function updateActionButtonStates(activeDeviceId) {
+    document.querySelectorAll('.action-panel-btn').forEach(btn => {
+      if (btn.dataset.deviceId === activeDeviceId) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
   }
 
   // Show Toast

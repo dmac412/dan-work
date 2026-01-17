@@ -353,11 +353,176 @@ function getAllDevices(nodes = locationData) {
   return devices;
 }
 
+// Generate historical health data for a room (30 days)
+function generateRoomHistory(roomId, roomStatus) {
+  const history = [];
+  const now = new Date();
+
+  // Problematic rooms have more incidents
+  const isProblematic = Math.random() < 0.15; // 15% of rooms are problematic
+  const baseIncidentRate = isProblematic ? 0.25 : 0.03; // 25% vs 3% daily incident chance
+
+  let incidents = [];
+  let totalDowntimeMinutes = 0;
+
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+
+    // Determine if there was an incident this day
+    const hadIncident = Math.random() < baseIncidentRate;
+    let dayStatus = 'healthy';
+    let downtimeMinutes = 0;
+
+    if (hadIncident) {
+      dayStatus = 'issue';
+      downtimeMinutes = Math.floor(Math.random() * 120) + 5; // 5-125 minutes
+      totalDowntimeMinutes += downtimeMinutes;
+
+      const issueTypes = [
+        'Device offline',
+        'Network connectivity',
+        'Display failure',
+        'Audio issues',
+        'Controller unresponsive',
+        'Firmware crash'
+      ];
+
+      incidents.push({
+        date: date.toISOString(),
+        issue: issueTypes[Math.floor(Math.random() * issueTypes.length)],
+        duration: downtimeMinutes,
+        resolved: true
+      });
+    }
+
+    history.push({
+      date: date.toISOString().split('T')[0],
+      status: dayStatus,
+      downtimeMinutes: downtimeMinutes
+    });
+  }
+
+  // Calculate uptime percentage (assuming 8 hours of use per day)
+  const totalPossibleMinutes = 30 * 8 * 60; // 30 days * 8 hours * 60 minutes
+  const uptimePercentage = ((totalPossibleMinutes - totalDowntimeMinutes) / totalPossibleMinutes * 100).toFixed(1);
+
+  return {
+    roomId,
+    history,
+    incidents,
+    uptimePercentage: parseFloat(uptimePercentage),
+    totalIncidents: incidents.length,
+    totalDowntimeMinutes,
+    isProblematic: incidents.length >= 3,
+    avgResolutionTime: incidents.length > 0
+      ? Math.round(totalDowntimeMinutes / incidents.length)
+      : 0,
+    lastIncident: incidents.length > 0
+      ? incidents[incidents.length - 1].date
+      : null
+  };
+}
+
+// Generate health data for all rooms
+function generateAllRoomHealth() {
+  const allRooms = [];
+
+  function collectRooms(nodes, path = []) {
+    for (const node of nodes) {
+      if (node.type === 'room') {
+        const healthData = generateRoomHistory(node.id, node.status);
+        healthData.roomName = node.name;
+        healthData.path = [...path, node.name];
+        healthData.campus = path[1] || '';
+        healthData.building = path[2] || '';
+        healthData.currentStatus = node.status;
+        allRooms.push(healthData);
+      }
+      if (node.children) {
+        collectRooms(node.children, [...path, node.name]);
+      }
+    }
+  }
+
+  collectRooms(locationData);
+  return allRooms;
+}
+
+// Room health data
+const roomHealthData = generateAllRoomHealth();
+
+// Get problematic rooms (sorted by incident count)
+function getProblematicRooms(limit = 10) {
+  return roomHealthData
+    .filter(r => r.totalIncidents > 0)
+    .sort((a, b) => b.totalIncidents - a.totalIncidents || a.uptimePercentage - b.uptimePercentage)
+    .slice(0, limit);
+}
+
+// Get room health by ID
+function getRoomHealth(roomId) {
+  return roomHealthData.find(r => r.roomId === roomId);
+}
+
+// Get campus health summary
+function getCampusHealthSummary() {
+  const campuses = {};
+
+  for (const room of roomHealthData) {
+    if (!campuses[room.campus]) {
+      campuses[room.campus] = {
+        name: room.campus,
+        totalRooms: 0,
+        healthyRooms: 0,
+        totalIncidents: 0,
+        avgUptime: 0,
+        uptimeSum: 0
+      };
+    }
+
+    campuses[room.campus].totalRooms++;
+    campuses[room.campus].uptimeSum += room.uptimePercentage;
+    campuses[room.campus].totalIncidents += room.totalIncidents;
+
+    if (room.currentStatus === 'healthy') {
+      campuses[room.campus].healthyRooms++;
+    }
+  }
+
+  // Calculate averages
+  for (const campus of Object.values(campuses)) {
+    campus.avgUptime = (campus.uptimeSum / campus.totalRooms).toFixed(1);
+  }
+
+  return Object.values(campuses);
+}
+
+// Get dashboard summary stats
+function getDashboardStats() {
+  const totalRooms = roomHealthData.length;
+  const healthyRooms = roomHealthData.filter(r => r.currentStatus === 'healthy').length;
+  const issueRooms = totalRooms - healthyRooms;
+  const avgUptime = (roomHealthData.reduce((sum, r) => sum + r.uptimePercentage, 0) / totalRooms).toFixed(1);
+
+  return {
+    totalRooms,
+    healthyRooms,
+    issueRooms,
+    avgUptime
+  };
+}
+
 // Export for use
 window.DeviceData = {
   locations: locationData,
   schoolProfile: SCHOOL_PROFILE,
   findRoomById,
   getBreadcrumb,
-  getAllDevices
+  getAllDevices,
+  getRoomHealth,
+  getProblematicRooms,
+  getCampusHealthSummary,
+  getDashboardStats,
+  roomHealthData
 };
