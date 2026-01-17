@@ -2,38 +2,48 @@
 /* Dark Mode Professional Theme */
 
 :root {
-  /* Color Palette */
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-tertiary: #21262d;
-  --bg-hover: #30363d;
+  /* Color Palette - Warm Grey Theme */
+  --bg-primary: #f5f3f0;
+  --bg-secondary: #eae7e3;
+  --bg-tertiary: #ddd9d4;
+  --bg-hover: #d1ccc6;
   --bg-selected: #1f6feb20;
 
-  --border-primary: #30363d;
-  --border-secondary: #21262d;
+  --border-primary: #c9c4bd;
+  --border-secondary: #d5d1cb;
   --border-focus: #1f6feb;
 
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --text-muted: #6e7681;
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --text-muted: #8b949e;
 
   --accent-blue: #1f6feb;
   --accent-blue-hover: #388bfd;
 
-  --status-healthy: #238636;
-  --status-healthy-bg: #23863620;
-  --status-issue: #da3633;
-  --status-issue-bg: #da363320;
+  --status-healthy: #1a7f37;
+  --status-healthy-bg: #dafbe1;
+  --status-issue: #cf222e;
+  --status-issue-bg: #ffebe9;
 
-  --alert-critical: #f85149;
-  --alert-critical-bg: #f8514920;
-  --alert-warning: #d29922;
-  --alert-warning-bg: #d2992220;
+  --alert-critical: #cf222e;
+  --alert-critical-bg: #ffebe9;
+  --alert-warning: #9a6700;
+  --alert-warning-bg: #fff8c5;
 
-  --badge-managed: #238636;
-  --badge-managed-bg: #23863630;
-  --badge-discovered: #6e7681;
-  --badge-discovered-bg: #6e768130;
+  --badge-controller: #8250df;
+  --badge-controller-bg: #fbefff;
+  --badge-tlp: #0969da;
+  --badge-tlp-bg: #ddf4ff;
+  --badge-managed: #1a7f37;
+  --badge-managed-bg: #dafbe1;
+  --badge-onboarded: #9a6700;
+  --badge-onboarded-bg: #fff8c5;
+  --badge-discovered: #57606a;
+  --badge-discovered-bg: #eaeef2;
+
+  /* Firmware update indicator */
+  --firmware-update: #0969da;
+  --firmware-update-bg: #ddf4ff;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -157,8 +167,8 @@ body {
 
 /* Search highlight */
 .search-highlight {
-  background-color: var(--accent-blue);
-  color: var(--bg-primary);
+  background-color: #fff8c5;
+  color: var(--text-primary);
   border-radius: 2px;
   padding: 0 2px;
   font-weight: 600;
@@ -326,8 +336,8 @@ body {
 
 .node-count {
   font-size: 12px;
-  color: var(--text-muted);
-  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  background-color: var(--bg-hover);
   padding: 2px 8px;
   border-radius: 10px;
   flex-shrink: 0;
@@ -418,8 +428,20 @@ body {
   letter-spacing: 0.5px;
 }
 
+.count-item.controller .count-value {
+  color: var(--badge-controller);
+}
+
+.count-item.tlp .count-value {
+  color: var(--badge-tlp);
+}
+
 .count-item.managed .count-value {
   color: var(--badge-managed);
+}
+
+.count-item.onboarded .count-value {
+  color: var(--badge-onboarded);
 }
 
 .count-item.discovered .count-value {
@@ -513,6 +535,77 @@ body {
   display: flex;
   flex-direction: column;
   padding: var(--spacing-lg) var(--spacing-xl);
+  gap: var(--spacing-lg);
+}
+
+/* Content Cards - Placeholder squares */
+.content-cards {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.content-card {
+  flex: 1;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.placeholder-card {
+  height: 120px;
+  background-color: var(--bg-tertiary);
+  border: 2px dashed var(--border-primary);
+}
+
+/* Table Section */
+.table-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.table-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.selection-control {
+  display: flex;
+  align-items: center;
+}
+
+/* Inline Bulk Actions */
+.inline-bulk .bulk-btn-inline {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: transparent;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: all var(--transition-fast);
+  opacity: 0.6;
+}
+
+.inline-bulk.has-selection .bulk-btn-inline {
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: white;
+  cursor: pointer;
+  opacity: 1;
+}
+
+.inline-bulk.has-selection .bulk-btn-inline:hover {
+  background-color: var(--accent-blue-hover);
 }
 
 .table-controls {
@@ -524,8 +617,7 @@ body {
 
 .search-box {
   position: relative;
-  flex: 1;
-  max-width: 400px;
+  width: 280px;
 }
 
 .search-box input {
@@ -627,10 +719,11 @@ body {
 
 .device-table tbody tr {
   transition: background-color var(--transition-fast);
+  background-color: var(--bg-secondary);
 }
 
 .device-table tbody tr:hover {
-  background-color: var(--bg-hover);
+  background-color: var(--bg-tertiary);
 }
 
 .device-table tbody tr.has-issue {
@@ -638,16 +731,80 @@ body {
 }
 
 .device-table tbody tr.has-issue:hover {
-  background-color: #da363330;
+  background-color: #ffd7d5;
 }
+
 
 .device-table tbody tr.discovered {
-  opacity: 0.7;
+  opacity: 0.8;
+  background-color: #f8f8f6;
 }
 
-/* Checkbox */
+.device-table tbody tr.discovered:hover {
+  background-color: var(--bg-hover);
+}
+
+/* Controller and Managed Device Grouping */
+.device-table tbody tr.controller-row {
+  background-color: #f3e8ff;
+  border-left: 3px solid var(--badge-controller);
+}
+
+.device-table tbody tr.controller-row:hover {
+  background-color: #ead5ff;
+}
+
+.device-table tbody tr.managed-row.associated {
+  background-color: #faf5ff;
+  border-left: 3px solid #d8b4fe;
+}
+
+.device-table tbody tr.managed-row.associated:hover {
+  background-color: #f3e8ff;
+}
+
+.device-table tbody tr.managed-row.associated td:first-child {
+  padding-left: calc(var(--spacing-lg) + 8px);
+}
+
+/* Association indicator */
+.association-indicator {
+  color: var(--badge-controller);
+  font-size: 14px;
+  margin-right: var(--spacing-xs);
+  opacity: 0.8;
+}
+
+/* Group separator - visual connection between controller and managed */
+.device-table tbody tr.controller-row td {
+  border-bottom: none;
+}
+
+.device-table tbody tr.managed-row.associated:last-of-type td,
+.device-table tbody tr.managed-row.associated + tr:not(.managed-row) td {
+  border-top: none;
+}
+
+/* Subtle divider after the controller group */
+.device-table tbody tr.managed-row.associated + tr:not(.managed-row):not(.controller-row) {
+  border-top: 2px solid var(--border-primary);
+}
+
+/* Column widths */
 .checkbox-cell {
   width: 40px;
+}
+
+.col-type {
+  width: 100px;
+}
+
+.col-status {
+  width: 70px;
+}
+
+.col-firmware {
+  width: 140px;
 }
 
 .device-checkbox {
@@ -673,10 +830,28 @@ body {
   letter-spacing: 0.5px;
 }
 
+.type-badge.controller {
+  background-color: var(--badge-controller-bg);
+  color: var(--badge-controller);
+  border: 1px solid var(--badge-controller);
+}
+
+.type-badge.tlp {
+  background-color: var(--badge-tlp-bg);
+  color: var(--badge-tlp);
+  border: 1px solid var(--badge-tlp);
+}
+
 .type-badge.managed {
   background-color: var(--badge-managed-bg);
   color: var(--badge-managed);
   border: 1px solid var(--badge-managed);
+}
+
+.type-badge.onboarded {
+  background-color: var(--badge-onboarded-bg);
+  color: var(--badge-onboarded);
+  border: 1px solid var(--badge-onboarded);
 }
 
 .type-badge.discovered {
@@ -687,6 +862,29 @@ body {
 
 /* Device Info */
 .device-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.device-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.device-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.device-details {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -715,8 +913,8 @@ body {
   color: var(--text-primary);
 }
 
-/* Connection Status */
-.connection-cell {
+/* Status Column */
+.status-cell {
   text-align: center;
 }
 
@@ -781,6 +979,41 @@ body {
   font-size: 13px;
 }
 
+/* Firmware Column */
+.firmware-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.firmware-version {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.firmware-update-available {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--firmware-update);
+  font-weight: 500;
+}
+
+.firmware-update-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--firmware-update);
+  box-shadow: 0 0 6px var(--firmware-update);
+}
+
+.firmware-na {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 /* Empty State */
 .empty-state {
   flex: 1;
@@ -814,7 +1047,7 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -22,10 +22,10 @@
   const roomView = document.getElementById('roomView');
   const breadcrumb = document.getElementById('breadcrumb');
   const deviceCounts = document.getElementById('deviceCounts');
-  const bulkActions = document.getElementById('bulkActions');
-  const bulkActionBtn = document.getElementById('bulkActionBtn');
-  const bulkMenu = document.getElementById('bulkMenu');
-  const selectedCount = document.getElementById('selectedCount');
+  const inlineBulkActions = document.getElementById('inlineBulkActions');
+  const inlineBulkBtn = document.getElementById('inlineBulkBtn');
+  const inlineBulkMenu = document.getElementById('inlineBulkMenu');
+  const inlineSelectedCount = document.getElementById('inlineSelectedCount');
   const deviceSearch = document.getElementById('deviceSearch');
   const deviceTableBody = document.getElementById('deviceTableBody');
   const selectAllCheckbox = document.getElementById('selectAll');
@@ -38,12 +38,21 @@
 
   // Icons
   const icons = {
-    country: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`,
-    city: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"></line><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path><line x1="9" y1="9" x2="9" y2="9.01"></line><line x1="9" y1="12" x2="9" y2="12.01"></line><line x1="9" y1="15" x2="9" y2="15.01"></line><line x1="9" y1="18" x2="9" y2="18.01"></line></svg>`,
+    school: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>`,
+    campus: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"></circle><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"></path></svg>`,
     building: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="6" x2="9" y2="6.01"></line><line x1="15" y1="6" x2="15" y2="6.01"></line><line x1="9" y1="10" x2="9" y2="10.01"></line><line x1="15" y1="10" x2="15" y2="10.01"></line><line x1="9" y1="14" x2="9" y2="14.01"></line><line x1="15" y1="14" x2="15" y2="14.01"></line><line x1="9" y1="18" x2="15" y2="18"></line></svg>`,
-    floor: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>`,
     room: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
     chevron: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`
+  };
+
+  // Device icons for the info column
+  const deviceIcons = {
+    controller: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
+    tlp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12" y2="18.01"></line></svg>`,
+    projector: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2" ry="2"></rect><circle cx="8" cy="12" r="2"></circle><line x1="14" y1="10" x2="18" y2="10"></line><line x1="14" y1="14" x2="18" y2="14"></line><line x1="6" y1="17" x2="6" y2="20"></line><line x1="18" y1="17" x2="18" y2="20"></line></svg>`,
+    microphone: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`,
+    onboarded: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+    discovered: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`
   };
 
   // Fuzzy match function - returns match info with indices for highlighting
@@ -237,24 +246,26 @@
     // Select all checkbox
     selectAllCheckbox.addEventListener('change', handleSelectAll);
 
-    // Bulk action button
-    bulkActionBtn.addEventListener('click', (e) => {
+    // Inline bulk action button
+    inlineBulkBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      bulkMenu.classList.toggle('visible');
+      if (selectedDevices.size > 0) {
+        inlineBulkMenu.classList.toggle('visible');
+      }
     });
 
-    // Bulk menu items
-    bulkMenu.querySelectorAll('.bulk-menu-item').forEach(item => {
+    // Inline bulk menu items
+    inlineBulkMenu.querySelectorAll('.bulk-menu-item').forEach(item => {
       item.addEventListener('click', (e) => {
         const action = e.currentTarget.dataset.action;
         handleBulkAction(action);
-        bulkMenu.classList.remove('visible');
+        inlineBulkMenu.classList.remove('visible');
       });
     });
 
     // Close bulk menu on outside click
     document.addEventListener('click', () => {
-      bulkMenu.classList.remove('visible');
+      inlineBulkMenu.classList.remove('visible');
     });
 
     // Table sorting
@@ -272,7 +283,7 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeModal();
-        bulkMenu.classList.remove('visible');
+        inlineBulkMenu.classList.remove('visible');
       }
     });
   }
@@ -382,17 +393,25 @@
     // Render device counts
     const counts = room.deviceCount;
     deviceCounts.innerHTML = `
+      <div class="count-item controller">
+        <span class="count-value">${counts.controller}</span>
+        <span class="count-label">Controllers</span>
+      </div>
+      <div class="count-item tlp">
+        <span class="count-value">${counts.tlp}</span>
+        <span class="count-label">TLPs</span>
+      </div>
       <div class="count-item managed">
         <span class="count-value">${counts.managed}</span>
         <span class="count-label">Managed</span>
       </div>
+      <div class="count-item onboarded">
+        <span class="count-value">${counts.onboarded}</span>
+        <span class="count-label">Onboarded</span>
+      </div>
       <div class="count-item discovered">
         <span class="count-value">${counts.discovered}</span>
         <span class="count-label">Discovered</span>
-      </div>
-      <div class="count-item total">
-        <span class="count-value">${counts.total}</span>
-        <span class="count-label">Total</span>
       </div>
     `;
   }
@@ -414,9 +433,14 @@
       );
     }
 
-    // Apply sorting
-    if (sortColumn) {
-      devices.sort((a, b) => {
+    // Apply sorting (only if not searching - preserve grouping when not searching)
+    if (sortColumn && !searchQuery) {
+      // Separate devices by type for grouped sorting
+      const controllers = devices.filter(d => d.type === 'controller');
+      const managedDevices = devices.filter(d => d.type === 'managed');
+      const otherDevices = devices.filter(d => d.type !== 'controller' && d.type !== 'managed');
+
+      const sortFn = (a, b) => {
         let valA, valB;
 
         switch (sortColumn) {
@@ -436,6 +460,10 @@
             valA = a.status || 'zzz'; // N/A sorts last
             valB = b.status || 'zzz';
             break;
+          case 'firmware':
+            valA = a.firmware || 'zzz';
+            valB = b.firmware || 'zzz';
+            break;
           case 'alerts':
             valA = a.alerts ? a.alerts.length : 0;
             valB = b.alerts ? b.alerts.length : 0;
@@ -447,10 +475,29 @@
         if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
         if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
         return 0;
-      });
+      };
+
+      otherDevices.sort(sortFn);
+
+      // Keep controller + managed grouped together, then other devices
+      devices = [...controllers, ...managedDevices, ...otherDevices];
+    } else if (!searchQuery) {
+      // Default grouping: Controller with its managed devices first, then others
+      const controllers = devices.filter(d => d.type === 'controller');
+      const managedDevices = devices.filter(d => d.type === 'managed');
+      const otherDevices = devices.filter(d => d.type !== 'controller' && d.type !== 'managed');
+      devices = [...controllers, ...managedDevices, ...otherDevices];
     }
 
-    deviceTableBody.innerHTML = devices.map(device => renderDeviceRow(device)).join('');
+    deviceTableBody.innerHTML = devices.map((device, index, arr) => {
+      // Check if this is the first managed device (to add group separator)
+      const isFirstManaged = device.type === 'managed' &&
+        (index === 0 || arr[index - 1].type !== 'managed');
+      // Check if previous was controller (managed follows controller)
+      const followsController = index > 0 && arr[index - 1].type === 'controller';
+
+      return renderDeviceRow(device, followsController || (device.type === 'managed' && !isFirstManaged));
+    }).join('');
 
     // Bind row events
     deviceTableBody.querySelectorAll('.device-checkbox').forEach(checkbox => {
@@ -468,15 +515,29 @@
     updateSelectAllState();
   }
 
+  // Device types that are actively monitored (have status/alerts)
+  const MONITORED_TYPES = ['controller', 'tlp', 'managed', 'onboarded'];
+
+  // Device types that can be selected for bulk actions
+  const SELECTABLE_TYPES = ['controller', 'tlp', 'managed', 'onboarded'];
+
   // Render Device Row
-  function renderDeviceRow(device) {
-    const isManaged = device.type === 'managed';
-    const hasIssue = isManaged && (device.status === 'offline' || (device.alerts && device.alerts.length > 0));
+  function renderDeviceRow(device, isGrouped = false) {
+    const isMonitored = MONITORED_TYPES.includes(device.type);
+    const isSelectable = SELECTABLE_TYPES.includes(device.type);
+
+    // Check for critical issues (not firmware updates)
+    const hasCriticalIssue = isMonitored && (
+      device.status === 'offline' ||
+      (device.alerts && device.alerts.some(a => a.severity === 'critical' && !a.isFirmwareUpdate))
+    );
+
     const isSelected = selectedDevices.has(device.id);
+    const isAssociated = device.associatedTo ? true : false;
 
     // Connection status icon
     let connectionStatus;
-    if (!isManaged) {
+    if (!isMonitored) {
       connectionStatus = '<span class="connection-icon na" title="N/A">—</span>';
     } else if (device.status === 'online') {
       connectionStatus = '<span class="connection-icon online" title="Online">●</span>';
@@ -494,31 +555,79 @@
       alertBadge = `<span class="alert-badge ${severity}" data-device-id="${device.id}">${icon} ${device.alerts.length}</span>`;
     }
 
+    // Firmware version with update indicator
+    let firmwareCell;
+    if (isMonitored && device.firmware) {
+      firmwareCell = `
+        <div class="firmware-cell">
+          <span class="firmware-version">${device.firmware}</span>
+          ${device.hasFirmwareUpdate ? `<span class="firmware-update-available"><span class="firmware-update-dot"></span> Update</span>` : ''}
+        </div>
+      `;
+    } else {
+      firmwareCell = '<span class="firmware-na">—</span>';
+    }
+
+    // Association indicator for managed devices
+    const associationIndicator = isAssociated
+      ? '<span class="association-indicator" title="Associated to Controller">↳</span>'
+      : '';
+
+    // Determine device icon
+    let deviceIcon = '';
+    if (device.type === 'controller') {
+      deviceIcon = deviceIcons.controller;
+    } else if (device.type === 'tlp') {
+      deviceIcon = deviceIcons.tlp;
+    } else if (device.type === 'onboarded') {
+      deviceIcon = deviceIcons.onboarded;
+    } else if (device.type === 'discovered') {
+      deviceIcon = deviceIcons.discovered;
+    } else if (device.type === 'managed') {
+      // Alternate between projector and microphone based on hostname
+      // MGD1 = projector, MGD2 = microphone
+      deviceIcon = device.hostname.includes('MGD1') ? deviceIcons.projector : deviceIcons.microphone;
+    }
+
+    // Row classes
+    const rowClasses = [
+      hasCriticalIssue ? 'has-issue' : '',
+      device.type === 'discovered' ? 'discovered' : '',
+      device.type === 'controller' ? 'controller-row' : '',
+      device.type === 'managed' ? 'managed-row associated' : '',
+      isGrouped ? 'grouped-device' : ''
+    ].filter(Boolean).join(' ');
+
     return `
-      <tr class="${hasIssue ? 'has-issue' : ''} ${!isManaged ? 'discovered' : ''}">
+      <tr class="${rowClasses}" data-device-type="${device.type}">
         <td class="checkbox-cell">
           <input type="checkbox"
                  class="device-checkbox"
                  data-device-id="${device.id}"
-                 ${!isManaged ? 'disabled' : ''}
+                 ${!isSelectable ? 'disabled' : ''}
                  ${isSelected ? 'checked' : ''}>
         </td>
         <td>
+          ${associationIndicator}
           <span class="type-badge ${device.type}">${device.type}</span>
         </td>
-        <td class="connection-cell">
+        <td class="status-cell">
           ${connectionStatus}
         </td>
         <td>
           <div class="device-info">
-            <span class="device-hostname">${device.hostname}</span>
-            <span class="device-model">${device.model}</span>
-            <span class="device-serial">${device.serialNumber}</span>
+            <span class="device-icon">${deviceIcon}</span>
+            <div class="device-details">
+              <span class="device-hostname">${device.hostname}</span>
+              <span class="device-model">${device.model}</span>
+              <span class="device-serial">${device.serialNumber}</span>
+            </div>
           </div>
         </td>
         <td>
           <span class="ip-address">${device.ipAddress}</span>
         </td>
+        <td>${firmwareCell}</td>
         <td>${alertBadge}</td>
       </tr>
     `;
@@ -541,12 +650,12 @@
     const room = DeviceData.findRoomById(selectedRoomId);
     if (!room || !room.devices) return;
 
-    const managedDevices = room.devices.filter(d => d.type === 'managed');
+    const selectableDevices = room.devices.filter(d => SELECTABLE_TYPES.includes(d.type));
 
     if (e.target.checked) {
-      managedDevices.forEach(d => selectedDevices.add(d.id));
+      selectableDevices.forEach(d => selectedDevices.add(d.id));
     } else {
-      managedDevices.forEach(d => selectedDevices.delete(d.id));
+      selectableDevices.forEach(d => selectedDevices.delete(d.id));
     }
 
     renderDeviceTable();
@@ -558,18 +667,23 @@
     const room = DeviceData.findRoomById(selectedRoomId);
     if (!room || !room.devices) return;
 
-    const managedDevices = room.devices.filter(d => d.type === 'managed');
-    const selectedManagedCount = managedDevices.filter(d => selectedDevices.has(d.id)).length;
+    const selectableDevices = room.devices.filter(d => SELECTABLE_TYPES.includes(d.type));
+    const selectedCount = selectableDevices.filter(d => selectedDevices.has(d.id)).length;
 
-    selectAllCheckbox.checked = selectedManagedCount === managedDevices.length && managedDevices.length > 0;
-    selectAllCheckbox.indeterminate = selectedManagedCount > 0 && selectedManagedCount < managedDevices.length;
+    selectAllCheckbox.checked = selectedCount === selectableDevices.length && selectableDevices.length > 0;
+    selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < selectableDevices.length;
   }
 
   // Update Bulk Actions
   function updateBulkActions() {
     const count = selectedDevices.size;
-    selectedCount.textContent = count;
-    bulkActions.style.display = count > 0 ? 'flex' : 'none';
+    inlineSelectedCount.textContent = count;
+    // Toggle active state based on selection
+    if (count > 0) {
+      inlineBulkActions.classList.add('has-selection');
+    } else {
+      inlineBulkActions.classList.remove('has-selection');
+    }
   }
 
   // Handle Bulk Action

@@ -63,64 +63,73 @@
             <div class="device-counts" id="deviceCounts">
               <!-- Rendered by JS -->
             </div>
-            <div class="bulk-actions" id="bulkActions" style="display: none;">
-              <div class="bulk-dropdown">
-                <button class="bulk-btn" id="bulkActionBtn">
-                  <span id="selectedCount">0</span> Selected
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
-                <div class="bulk-menu" id="bulkMenu">
-                  <div class="bulk-menu-item" data-action="reboot">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="23 4 23 10 17 10"></polyline>
-                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                    </svg>
-                    Reboot Selected
-                  </div>
-                  <div class="bulk-menu-item" data-action="firmware">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Update Firmware
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </header>
 
         <div class="device-table-container">
-          <div class="table-controls">
-            <div class="search-box">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input type="text" id="deviceSearch" placeholder="Search devices by hostname, IP, model, or serial...">
-            </div>
+          <!-- Placeholder squares above table -->
+          <div class="content-cards">
+            <div class="content-card placeholder-card"></div>
+            <div class="content-card placeholder-card"></div>
           </div>
-          <div class="table-wrapper">
-            <table class="device-table">
-              <thead>
-                <tr>
-                  <th class="checkbox-cell">
-                    <input type="checkbox" class="device-checkbox" id="selectAll">
-                  </th>
-                  <th data-sort="type">Type <span class="sort-icon">↕</span></th>
-                  <th data-sort="status">Connection <span class="sort-icon">↕</span></th>
-                  <th data-sort="hostname">Device Info <span class="sort-icon">↕</span></th>
-                  <th data-sort="ipAddress">IP Address <span class="sort-icon">↕</span></th>
-                  <th data-sort="alerts">Alerts <span class="sort-icon">↕</span></th>
-                </tr>
-              </thead>
-              <tbody id="deviceTableBody">
-                <!-- Rendered by JS -->
-              </tbody>
-            </table>
+
+          <div class="table-section">
+            <div class="table-header-row">
+              <div class="selection-control">
+                <div class="bulk-dropdown inline-bulk" id="inlineBulkActions">
+                  <button class="bulk-btn-inline" id="inlineBulkBtn">
+                    <span id="inlineSelectedCount">0</span> Selected
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                  <div class="bulk-menu" id="inlineBulkMenu">
+                    <div class="bulk-menu-item" data-action="reboot">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                      </svg>
+                      Reboot Selected
+                    </div>
+                    <div class="bulk-menu-item" data-action="firmware">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                      Update Firmware
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="search-box">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="deviceSearch" placeholder="Search devices...">
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="device-table">
+                <thead>
+                  <tr>
+                    <th class="checkbox-cell">
+                      <input type="checkbox" class="device-checkbox" id="selectAll">
+                    </th>
+                    <th data-sort="type" class="col-type">Type <span class="sort-icon">↕</span></th>
+                    <th data-sort="status" class="col-status">Status <span class="sort-icon">↕</span></th>
+                    <th data-sort="hostname">Device Info <span class="sort-icon">↕</span></th>
+                    <th data-sort="ipAddress">IP Address <span class="sort-icon">↕</span></th>
+                    <th data-sort="firmware" class="col-firmware">Firmware <span class="sort-icon">↕</span></th>
+                    <th data-sort="alerts">Alerts <span class="sort-icon">↕</span></th>
+                  </tr>
+                </thead>
+                <tbody id="deviceTableBody">
+                  <!-- Rendered by JS -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
