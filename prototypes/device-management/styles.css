@@ -662,7 +662,7 @@ body {
 .bulk-menu {
   position: absolute;
   top: 100%;
-  right: 0;
+  left: 0;
   margin-top: var(--spacing-xs);
   background-color: var(--bg-tertiary);
   border: 1px solid var(--border-primary);
@@ -1219,8 +1219,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
   gap: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .selection-control {
@@ -1302,9 +1308,11 @@ body {
 
 .table-wrapper {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: auto;
   border: 1px solid var(--border-primary);
-  border-radius: var(--radius-lg);
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   background-color: var(--bg-secondary);
 }
 
